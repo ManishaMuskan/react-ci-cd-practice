@@ -21,6 +21,22 @@ jobs:
       - name: Generate deployment package
         run: zip -r deploy.zip . -x '*.git*'
 
+      - name: Wait for Elastic Beanstalk to be Ready
+        run: |
+          while true; do
+            STATUS=$(aws elasticbeanstalk describe-environments \
+              --application-name react-docker-ci-cd-practice \
+              --environment-names React-docker-ci-cd-practice-env \
+              --query "Environments[0].Status" --output text)
+            if [ "$STATUS" = "Ready" ]; then
+              echo "Environment is Ready. Proceeding with deployment."
+              break
+            else
+              echo "Environment status is $STATUS. Waiting..."
+              sleep 30
+            fi
+          done
+
       - name: Deploy to AWS ElasticBeanStalk
         uses: einaregilsson/beanstalk-deploy@v18
         with:
